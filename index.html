@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Crystal Market, farmacia online</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230E5C46'/><path d='M12 6h8v6h6v8h-6v6h-8v-6H6v-8h6z' fill='%23fff'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,500;12..96,75..100,800&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
 <style>
@@ -11,6 +12,16 @@
     --paper:#F1F5F2; --ink:#12211B; --mut:#4A5F56; --pine:#0E5C46; --pine2:#0A4535;
     --sig:#C8322A; --line:#C9D6CF; --white:#fff; --sans:"Bricolage Grotesque",system-ui,sans-serif; --serif:Newsreader,Georgia,serif;
   }
+  
+  /* Stile Modalità Invertita */
+  body.inverted-mode {
+    filter: invert(100%) hue-rotate(180deg);
+    background: #0e0a0d;
+  }
+  body.inverted-mode img, body.inverted-mode .prod-img {
+    filter: invert(100%) hue-rotate(180deg);
+  }
+
   html { scroll-padding-top:70px; scroll-behavior:smooth; }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--paper); color:var(--ink); font:1rem/1.6 var(--sans); }
@@ -20,8 +31,11 @@
   :focus-visible { outline:3px solid var(--pine); outline-offset:2px; }
   
   header { position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:14px; padding:10px 4vw; background:var(--white); border-bottom:2px solid var(--pine); }
-  .brand { display:flex; align-items:center; gap:10px; font-weight:800; font-size:1.1rem; }
+  .brand-wrapper { display:flex; flex-direction:column; gap:4px; }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:800; font-size:1.1rem; cursor:pointer; user-select:none; }
   .brand img { width:30px; height:30px; }
+  .secret-box-input { padding:4px 8px; font-size:0.8rem; border:1px solid var(--line); border-radius:4px; width:160px; display:none; }
+  
   nav { margin-left:auto; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
   nav a.l { color:var(--mut); }
   nav a.l:hover { color:var(--pine); }
@@ -38,6 +52,7 @@
   .btn-full { width:100%; margin-top:8px; }
   .cnt { background:#fff; color:var(--pine); border-radius:99px; padding:0 7px; font-size:.8rem; margin-left:4px; }
   .badge-admin { background:#e8f4f0; color:var(--pine); padding:2px 8px; border-radius:4px; font-size:.8rem; font-weight:700; border:1px solid var(--pine); }
+  .badge-super { background:#fde8e8; color:var(--sig); border-color:var(--sig); }
 
   section { padding:40px 4vw; max-width:1000px; margin:auto; }
   .hero { padding-top:6vh; padding-bottom:24px; }
@@ -62,14 +77,14 @@
   .prod-content { display:flex; gap:16px; flex:1; }
   .list h3 { font-size:1.35rem; font-weight:800; }
   .form { color:var(--mut); font-size:.9rem; margin:2px 0 6px; }
-  .stock-info { font-size:.85rem; font-weight:600; color:var(--pine); margin-top:4px; }
-  .stock-info.out { color:var(--sig); }
+  .stock-info { font-size:.85rem; font-weight:600; color:var(--pine); margin-top:6px; background:#e8f4f0; padding:6px 10px; border-radius:4px; }
+  .stock-info.out { color:var(--sig); background:#fde8e8; }
   .main p { font-family:var(--serif); font-size:1.05rem; margin:4px 0; max-width:62ch; }
   .rxmsg { color:var(--sig); }
   details summary { cursor:pointer; color:var(--pine); font-weight:500; margin-top:6px; }
   .buy { display:flex; flex-direction:column; align-items:flex-end; gap:8px; min-width:130px; }
   .price { font-weight:800; font-size:1.25rem; }
-  .admin-actions { display:flex; gap:6px; margin-top:8px; }
+  .admin-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
   @media(max-width:650px){ 
     .list li { flex-direction:column; } 
     .prod-content { flex-direction:column; }
@@ -81,9 +96,7 @@
   .box { background:var(--white); padding:22px; width:100%; max-width:480px; max-height:92vh; overflow:auto; border-radius:8px; position:relative; }
   .box label { display:block; font-size:.85rem; color:var(--mut); margin:10px 0 3px; font-weight:600; }
   .x { float:right; background:none; border:0; font-size:1.5rem; color:var(--ink); cursor:pointer; }
-  .tabs { display:flex; gap:8px; margin:10px 0; }
   .msg { font-size:.9rem; min-height:1.4em; margin-top:8px; color:var(--sig); }
-  .msg.ok { color:var(--pine); }
 
   .drawer { position:fixed; top:0; right:0; bottom:0; width:min(400px,100%); background:var(--white); border-left:2px solid var(--pine); z-index:40; transform:translateX(105%); transition:transform .3s; padding:18px; display:flex; flex-direction:column; padding-top:calc(18px + env(safe-area-inset-top,0px)); }
   .drawer.open { transform:none; }
@@ -104,20 +117,27 @@
   .fine { color:var(--mut); font-size:.85rem; }
   #toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(90px); background:var(--ink); color:#fff; padding:10px 18px; border-radius:6px; z-index:60; transition:transform .3s; }
   #toast.s { transform:translateX(-50%); }
+  
+  .creds-box { background:#f4f7f5; padding:10px; border-radius:6px; font-size:.8rem; margin-top:10px; border:1px solid var(--line); }
+  .creds-box code { font-weight:bold; color:var(--pine2); }
+  .stocks-grid-admin { display:grid; grid-template-columns:1fr 1fr; gap:8px; background:#f4f7f5; padding:10px; border-radius:6px; border:1px solid var(--line); }
   @media(prefers-reduced-motion:reduce){ * { transition:none!important; scroll-behavior:auto!important; } }
 </style>
 </head>
 <body>
 
 <header>
-  <a class="brand" href="#top">
-    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230E5C46'/><path d='M12 6h8v6h6v8h-6v6h-8v-6H6v-8h6z' fill='%23fff'/></svg>" alt="" />
-    Crystal Market
-  </a>
+  <div class="brand-wrapper">
+    <a id="brandLogo" class="brand" href="#top">
+      <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230E5C46'/><path d='M12 6h8v6h6v8h-6v6h-8v-6H6v-8h6z' fill='%23fff'/></svg>" alt="" />
+      Crystal Market
+    </a>
+    <input id="secretLoginInput" class="secret-box-input" type="text" placeholder="" />
+  </div>
   <nav>
     <a class="l" href="#shop">Catalogo</a>
     <a class="l" href="#dove">Ricetta</a>
-    <span id="adminBadge" class="badge-admin" style="display:none;">Collaboratore</span>
+    <span id="adminBadge" class="badge-admin" style="display:none;"></span>
     <button id="accountBtn" class="btn o">Accedi</button>
     <button id="cartBtn" class="btn">Carrello <span id="cartCount" class="cnt">0</span></button>
   </nav>
@@ -126,7 +146,7 @@
 <main id="top">
   <section class="hero">
     <h1>Cosa ti serve oggi?</h1>
-    <label class="big" for="searchInput">Cerca un medicinale o un disturbo</label>
+    <label id="searchLabel" class="big" for="searchInput">Cerca un medicinale o un disturbo</label>
     <input id="searchInput" class="bigin" placeholder="Es. mal di testa, ibuprofene, tosse" />
     <div id="tagsBar" class="bar" role="group" aria-label="Disturbi"></div>
     <p class="lead">Medicinali senza ricetta con l'uso spiegato in due righe. Per quelli con ricetta o per il ritiro rapido, consulta le nostre farmacie fisiche sul territorio.</p>
@@ -169,28 +189,31 @@
 <div id="authModal" class="ov">
   <div class="box">
     <button class="x" onclick="closeAuthModal()">&times;</button>
-    <h2 id="authTitle">Accedi</h2>
-    <div class="tabs">
-      <button id="tabLogin" class="chip on" onclick="switchAuthMode(true)">Login</button>
-      <button id="tabRegister" class="chip" onclick="switchAuthMode(false)">Registrati</button>
+    <h2 id="authTitle">Accedi al Sistema</h2>
+    <div style="margin-top:10px;">
+      <label>Email Credenziali</label>
+      <input id="authEmail" type="email" autocomplete="email" placeholder="es. admin@cm.com o cioci@crystalmarket.it" />
+      <label>Password</label>
+      <input id="authPassword" type="password" placeholder="es. admin123" />
+      
+      <div class="creds-box">
+        <b>👑 Super Admin (Modifica Tutto):</b><br/>
+        • <code>admin@cm.com</code> / <code>admin123</code><br/><br/>
+        <b>🏛️ Farmacie Partner:</b><br/>
+        • <code>paolucci@crystalmarket.it</code> / <code>paolucci123</code><br/>
+        • <code>cioci@crystalmarket.it</code> / <code>cioci123</code><br/>
+        • <code>fumarola@crystalmarket.it</code> / <code>fumarola123</code><br/>
+        • <code>bartolini@crystalmarket.it</code> / <code>bartolini123</code><br/>
+        • <code>piersantelli@crystalmarket.it</code> / <code>piersantelli123</code>
+      </div>
+
+      <div id="authMsg" class="msg"></div>
+      <button id="authSubmitBtn" class="btn btn-full">Entra</button>
     </div>
-    <div id="nameField" style="display:none;">
-      <label>Nome</label>
-      <input id="authName" type="text" />
-    </div>
-    <label>Email</label>
-    <input id="authEmail" type="email" autocomplete="email" />
-    <label>Password (min. 6)</label>
-    <input id="authPassword" type="password" />
-    <p style="font-size:.8rem; color:var(--mut); margin-top:6px;">
-      💡 <b>Credenziali Collaboratore Demo:</b><br/>Email: <code>admin@crystalmarket.it</code> | Pass: <code>admin123</code>
-    </p>
-    <div id="authMsg" class="msg"></div>
-    <button id="authSubmitBtn" class="btn btn-full">Entra</button>
   </div>
 </div>
 
-<!-- Modal Farmacie Partner ("Dove andare") -->
+<!-- Modal Farmacie Partner -->
 <div id="pharmacyModal" class="ov">
   <div class="box">
     <button class="x" onclick="closePharmacyModal()">&times;</button>
@@ -203,11 +226,37 @@
   </div>
 </div>
 
-<!-- Modal Aggiungi / Modifica Prodotto (Collaboratore) -->
+<!-- Modal Gestione Giacenza Farmacia Singola -->
+<div id="pharmacyStockModal" class="ov">
+  <div class="box">
+    <button class="x" onclick="closePharmacyStockModal()">&times;</button>
+    <h2>Gestisci Giacenza Sede</h2>
+    <p id="pmPharmacyName" style="color:var(--pine); font-weight:bold; margin-top:4px;"></p>
+    <input type="hidden" id="psmId" />
+    
+    <label>Nome Prodotto</label>
+    <input id="psmName" type="text" disabled style="background:#eee;" />
+
+    <label>Stato Disponibilità nella tua Farmacia</label>
+    <select id="psmActive">
+      <option value="true">Disponibile nella mia farmacia</option>
+      <option value="false">Non gestito / Non disponibile</option>
+    </select>
+
+    <label>Quantità disponibile (pezzi)</label>
+    <input id="psmStock" type="number" min="0" placeholder="0" />
+
+    <div id="psmMsg" class="msg"></div>
+    <button class="btn btn-full" onclick="saveSinglePharmacyStock()">Salva Giacenza</button>
+  </div>
+</div>
+
+<!-- Modal Aggiungi / Modifica Prodotto -->
 <div id="productModal" class="ov">
   <div class="box">
     <button class="x" onclick="closeProductModal()">&times;</button>
-    <h2 id="prodModalTitle">Aggiungi Prodotto</h2>
+    <h2 id="pmModalTitle">Nuovo Prodotto</h2>
+    <p id="pmSubtitleMsg" style="font-size:.85rem; color:var(--pine); font-weight:bold; margin-top:4px;"></p>
     <input type="hidden" id="pmId" />
     
     <label>Nome Prodotto</label>
@@ -216,32 +265,31 @@
     <label>Forma / Dosaggio</label>
     <input id="pmForm" type="text" placeholder="Es. Paracetamolo · 20 compresse" />
 
-    <label>URL Immagine</label>
-    <input id="pmImg" type="url" placeholder="https://esempio.it/immagine.jpg" />
+    <label>URL Immagine o Data-URI</label>
+    <input id="pmImg" type="text" placeholder="https://... o data:image/svg+xml..." />
 
-    <label>Categoria / Tag principale</label>
+    <label>Categoria / Tag Principale</label>
     <select id="pmTag"></select>
 
     <label>Prezzo (€)</label>
     <input id="pmPrice" type="number" step="0.01" min="0" placeholder="5.90" />
 
-    <label>Quantità disponibile in magazzino</label>
-    <input id="pmStock" type="number" min="0" placeholder="10" />
-
     <label>Tipologia di vendita</label>
     <select id="pmRx">
       <option value="false">Senza ricetta (Acquistabile online)</option>
-      <option value="true">Obbligo di ricetta (Solo in farmacia fisica)</option>
+      <option value="true">Obbligo di ricetta (Solo in farmacia)</option>
     </select>
 
-    <label>Descrizione</label>
+    <label>Descrizione Uso</label>
     <textarea id="pmDesc" placeholder="Breve descrizione dell'uso..."></textarea>
 
     <label>Avvertenze</label>
-    <textarea id="pmWarn" placeholder="Consigli d'uso e precauzioni..."></textarea>
+    <textarea id="pmWarn" placeholder="Precauzioni d'uso..."></textarea>
+
+    <div id="pmStocksSection"></div>
 
     <div id="pmMsg" class="msg"></div>
-    <button id="pmSaveBtn" class="btn btn-full" onclick="saveProduct()">Salva Prodotto</button>
+    <button class="btn btn-full" onclick="saveProduct()">Salva Prodotto</button>
   </div>
 </div>
 
@@ -263,19 +311,17 @@
 <div id="toast"></div>
 
 <script>
-  // Utility
   const eur = (n) => n.toFixed(2).replace('.', ',') + ' €';
-  const validEmail = (s) => /^\S+@\S+\.\S+$/.test(s);
-
-  const DEFAULT_IMG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23e2ece9'/><path d='M35 50h30M50 35v30' stroke='%230E5C46' stroke-width='8' stroke-linecap='round'/></svg>";
 
   const ALL_PARTNER_PHARMACIES = [
-    { id: 'paolucci', name: 'Farmacia Paolucci', city: 'Senigallia (AN)', address: 'Corso II Giugno / Centro' },
-    { id: 'cioci', name: 'Farmacia Cioci', city: 'Ostra (AN)', address: 'Corso M. Polo' },
-    { id: 'fumarola', name: 'Farmacia Fumarola', city: 'Marotta (PU)', address: 'Via Viale Forlì' },
-    { id: 'bartolini', name: 'Farmacia Bartolini', city: 'Chiaravalle (AN)', address: 'Corso Matteotti' },
-    { id: 'piersantelli', name: 'Farmacia Piersantelli', city: 'Corinaldo (AN)', address: 'Via del Corso' }
+    { id: 'paolucci', name: 'Farmacia Paolucci', city: 'Senigallia (AN)', address: 'Corso II Giugno / Centro', email: 'paolucci@crystalmarket.it', pass: 'paolucci123' },
+    { id: 'cioci', name: 'Farmacia Cioci', city: 'Ostra (AN)', address: 'Corso M. Polo', email: 'cioci@crystalmarket.it', pass: 'cioci123' },
+    { id: 'fumarola', name: 'Farmacia Fumarola', city: 'Marotta (PU)', address: 'Via Viale Forlì', email: 'fumarola@crystalmarket.it', pass: 'fumarola123' },
+    { id: 'bartolini', name: 'Farmacia Bartolini', city: 'Chiaravalle (AN)', address: 'Corso Matteotti', email: 'bartolini@crystalmarket.it', pass: 'bartolini123' },
+    { id: 'piersantelli', name: 'Farmacia Piersantelli', city: 'Corinaldo (AN)', address: 'Via del Corso', email: 'piersantelli@crystalmarket.it', pass: 'piersantelli123' }
   ];
+
+  const SUPER_ADMIN = { email: 'admin@cm.com', pass: 'admin123', name: 'Super Admin' };
 
   const store = {
     get(key, fallback) {
@@ -286,80 +332,53 @@
     }
   };
 
-  async function hash(text) {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-    return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
-  }
+  const SVG_PILLS = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23e8f4f0'/><circle cx='50' cy='50' r='30' fill='%230E5C46'/><line x1='30' y1='50' x2='70' y2='50' stroke='%23fff' stroke-width='6'/></svg>";
+  const SVG_GEL = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23e8f4f0'/><path d='M30 75 L45 25 L55 25 L70 75 Z' fill='%230E5C46'/><rect x='40' y='15' width='20' height='10' rx='2' fill='%230A4535'/></svg>";
+  const SVG_SPRAY = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23e8f4f0'/><rect x='35' y='40' width='30' height='45' rx='4' fill='%230E5C46'/><rect x='45' y='20' width='10' height='20' fill='%230A4535'/><path d='M40 20 L60 20 L50 10 Z' fill='%230E5C46'/></svg>";
 
-  // Seleziona 2 o 3 farmacie casuali per un prodotto
-  function getRandomPharmacies() {
-    const shuffled = [...ALL_PARTNER_PHARMACIES].sort(() => 0.5 - Math.random());
-    const count = Math.floor(Math.random() * 2) + 2; // 2 o 3
-    return shuffled.slice(0, count).map(p => p.id);
-  }
-
-  // Prodotti Iniziali Predefiniti
-  const DEFAULT_PRODUCTS = [
-    { id: 1, name: 'Tachipirina 500 mg', form: 'Paracetamolo · 20 compresse', tags: ['Dolore', 'Febbre'], price: 5.9, stock: 25, img: '', desc: 'Abbassa la febbre e allevia dolori da lievi a moderati.', warn: 'Rispetta la dose massima giornaliera.', rx: false },
-    { id: 2, name: 'Moment 200 mg', form: 'Ibuprofene · 12 compresse', tags: ['Dolore', 'Febbre'], price: 7.9, stock: 15, img: '', desc: 'Antinfiammatorio per mal di testa, mal di denti e febbre.', warn: 'Prendilo a stomaco pieno.', rx: false },
-    { id: 3, name: 'Aspirina 500 mg', form: 'Acido acetilsalicilico · 10 compresse', tags: ['Dolore', 'Febbre'], price: 5.5, stock: 10, img: '', desc: 'Allevia dolori lievi, febbre e sintomi influenzali.', warn: 'Non darla sotto i 16 anni.', rx: false },
-    { id: 4, name: 'Voltaren Emulgel 1%', form: 'Diclofenac · gel 50 g', tags: ['Dolore'], price: 11.5, stock: 8, img: '', desc: 'Gel antinfiammatorio per dolori muscolari e articolari.', warn: 'Applicalo solo su pelle integra.', rx: false },
-    { id: 5, name: 'Buscopan 10 mg', form: 'Butilscopolamina · 20 compresse', tags: ['Stomaco', 'Intestino'], price: 7.5, stock: 12, img: '', desc: 'Allevia crampi e dolori dello stomaco e dell\'intestino.', warn: 'Evitalo con glaucoma ad angolo chiuso.', rx: false },
-    { id: 6, name: 'Imodium 2 mg', form: 'Loperamide · 12 capsule', tags: ['Intestino'], price: 6.9, stock: 20, img: '', desc: 'Riduce i sintomi della diarrea acuta.', warn: 'Non usarlo con febbre alta.', rx: false },
-    { id: 7, name: 'Zirtec 10 mg', form: 'Cetirizina · 7 compresse', tags: ['Allergia'], price: 6.9, stock: 14, img: '', desc: 'Antistaminico contro rinite allergica e prurito.', warn: 'Può dare sonnolenza.', rx: false },
-    { id: 8, name: 'Otrivin 0,1%', form: 'Xilometazolina · spray nasale 10 ml', tags: ['Raffreddore'], price: 6.5, stock: 18, img: '', desc: 'Decongestionante nasale ad azione rapida.', warn: 'Non usarlo oltre 5-7 giorni.', rx: false },
-    { id: 9, name: 'Augmentin 875 mg/125 mg', form: 'Amoxicillina e acido clavulanico · 12 compresse', tags: ['Altro'], price: 0, stock: 50, img: '', desc: 'Antibiotico per infezioni batteriche con ricetta.', warn: '', rx: true },
-    { id: 10, name: 'Ventolin 100 mcg', form: 'Salbutamolo · spray per inalazione', tags: ['Altro'], price: 0, stock: 30, img: '', desc: 'Broncodilatatore ad azione rapida per asma.', warn: '', rx: true }
+  const DEFAULT_PRODUCTS_STANDARD = [
+    { id: 1, name: 'Tachipirina 500 mg', form: 'Paracetamolo · 20 compresse', tags: ['Dolore', 'Febbre'], price: 5.9, img: SVG_PILLS, desc: 'Abbassa la febbre e allevia dolori da lievi a moderati.', warn: 'Rispetta la dose massima giornaliera.', rx: false, stocks: { cioci: 4, piersantelli: 9, paolucci: 12 } },
+    { id: 2, name: 'Moment 200 mg', form: 'Ibuprofene · 12 compresse', tags: ['Dolore', 'Febbre'], price: 7.9, img: SVG_PILLS, desc: 'Antinfiammatorio per mal di testa, mal di denti e febbre.', warn: 'Prendilo a stomaco pieno.', rx: false, stocks: { cioci: 2, fumarola: 5, bartolini: 8 } },
+    { id: 3, name: 'Aspirina 500 mg', form: 'Acido acetilsalicilico · 10 compresse', tags: ['Dolore', 'Febbre'], price: 5.5, img: SVG_PILLS, desc: 'Allevia dolori lievi, febbre e sintomi influenzali.', warn: 'Non darla sotto i 16 anni.', rx: false, stocks: { paolucci: 6, piersantelli: 3 } },
+    { id: 4, name: 'Voltaren Emulgel 1%', form: 'Diclofenac · gel 50 g', tags: ['Dolore'], price: 11.5, img: SVG_GEL, desc: 'Gel antinfiammatorio per dolori muscolari e articolari.', warn: 'Applicalo solo su pelle integra.', rx: false, stocks: { fumarola: 10, cioci: 1 } },
+    { id: 5, name: 'Buscopan 10 mg', form: 'Butilscopolamina · 20 compresse', tags: ['Stomaco', 'Intestino'], price: 7.5, img: SVG_PILLS, desc: 'Allevia crampi e dolori dello stomaco e dell\'intestino.', warn: 'Evitalo con glaucoma ad angolo chiuso.', rx: false, stocks: { bartolini: 15, paolucci: 4 } },
+    { id: 6, name: 'Imodium 2 mg', form: 'Loperamide · 12 capsule', tags: ['Intestino'], price: 6.9, img: SVG_PILLS, desc: 'Riduce i sintomi della diarrea acuta.', warn: 'Non usarlo con febbre alta.', rx: false, stocks: { cioci: 7, piersantelli: 5 } },
+    { id: 7, name: 'Zirtec 10 mg', form: 'Cetirizina · 7 compresse', tags: ['Allergia'], price: 6.9, img: SVG_PILLS, desc: 'Antistaminico contro rinite allergica e prurito.', warn: 'Può dare sonnolenza.', rx: false, stocks: { paolucci: 8, fumarola: 2 } },
+    { id: 8, name: 'Otrivin 0,1%', form: 'Xilometazolina · spray nasale 10 ml', tags: ['Raffreddore'], price: 6.5, img: SVG_SPRAY, desc: 'Decongestionante nasale ad azione rapida.', warn: 'Non usarlo oltre 5-7 giorni.', rx: false, stocks: { bartolini: 11, cioci: 6 } },
+    { id: 9, name: 'Augmentin 875 mg/125 mg', form: 'Amoxicillina e acido clavulanico · 12 compresse', tags: ['Altro'], price: 0, img: SVG_PILLS, desc: 'Antibiotico per infezioni batteriche con ricetta.', warn: '', rx: true, stocks: { paolucci: 20, cioci: 14, piersantelli: 8 } },
+    { id: 10, name: 'Ventolin 100 mcg', form: 'Salbutamolo · spray per inalazione', tags: ['Altro'], price: 0, img: SVG_SPRAY, desc: 'Broncodilatatore ad azione rapida per asma.', warn: '', rx: true, stocks: { fumarola: 12, bartolini: 9 } }
   ];
 
   const TAGS = ['Dolore', 'Febbre', 'Raffreddore', 'Gola', 'Stomaco', 'Intestino', 'Allergia', 'Pelle', 'Altro'];
 
-  // Inizializza Utenti & Admin predefinito
-  async function initUsers() {
-    const users = store.get('cm_users', {});
-    if (!users['admin@crystalmarket.it']) {
-      users['admin@crystalmarket.it'] = {
-        name: 'Collaboratore Admin',
-        hp: await hash('admin123'),
-        isAdmin: true
-      };
-      store.set('cm_users', users);
-    }
-  }
-  initUsers();
-
-  // Caricamento / Inizializzazione Prodotti con farmacie assegnate
-  let products = store.get('cm_products', null);
-  if (!products) {
-    products = DEFAULT_PRODUCTS.map(p => ({
-      ...p,
-      assignedPharmacies: getRandomPharmacies()
-    }));
-    store.set('cm_products', products);
-  } else {
-    // Assicura che anche eventuali prodotti salvati in precedenza abbiano le farmacie assegnate
-    let updated = false;
-    products.forEach(p => {
-      if (!p.assignedPharmacies || p.assignedPharmacies.length === 0) {
-        p.assignedPharmacies = getRandomPharmacies();
-        updated = true;
-      }
-    });
-    if (updated) store.set('cm_products', products);
-  }
-
   // Stato Applicazione
+  let isInvertedMode = store.get('cm_isInverted', false);
+  let productsStandard = store.get('cm_products_v9', DEFAULT_PRODUCTS_STANDARD);
+  let productsInverted = store.get('cm_products_inv_v9', []);
+
   let cart = {}; 
-  let user = store.get('cm_session', null);
+  let loggedSession = store.get('cm_logged_session', null);
   let searchQuery = '';
   let selectedTag = 'Tutti';
-  let isLoginMode = true;
 
-  function saveProductsStore() {
-    store.set('cm_products', products);
+  // Contatore Logo
+  let logoClickCount = 0;
+
+  function getActiveProducts() {
+    return isInvertedMode ? productsInverted : productsStandard;
+  }
+
+  function saveActiveProducts() {
+    if (isInvertedMode) {
+      store.set('cm_products_inv_v9', productsInverted);
+    } else {
+      store.set('cm_products_v9', productsStandard);
+    }
   }
 
   // Elementi DOM
+  const brandLogo = document.getElementById('brandLogo');
+  const secretLoginInput = document.getElementById('secretLoginInput');
   const searchInput = document.getElementById('searchInput');
   const tagsBar = document.getElementById('tagsBar');
   const productList = document.getElementById('productList');
@@ -377,11 +396,6 @@
   const cartTotal = document.getElementById('cartTotal');
   const checkoutBtn = document.getElementById('checkoutBtn');
   const authModal = document.getElementById('authModal');
-  const authTitle = document.getElementById('authTitle');
-  const tabLogin = document.getElementById('tabLogin');
-  const tabRegister = document.getElementById('tabRegister');
-  const nameField = document.getElementById('nameField');
-  const authName = document.getElementById('authName');
   const authEmail = document.getElementById('authEmail');
   const authPassword = document.getElementById('authPassword');
   const authMsg = document.getElementById('authMsg');
@@ -396,11 +410,38 @@
   const pharmacyProdName = document.getElementById('pharmacyProdName');
   const pharmacyModalList = document.getElementById('pharmacyModalList');
   const partnerPharmaciesContainer = document.getElementById('partnerPharmaciesContainer');
+  const pharmacyStockModal = document.getElementById('pharmacyStockModal');
   const productModal = document.getElementById('productModal');
   const pmTag = document.getElementById('pmTag');
   const toast = document.getElementById('toast');
 
-  // Popola la lista delle farmacie partner nel footer
+  // Gestione Easter Egg Logo (12 click per far apparire la nuova casella sotto al logo)
+  brandLogo.addEventListener('click', () => {
+    logoClickCount++;
+    if (logoClickCount === 12) {
+      secretLoginInput.style.display = 'block';
+      secretLoginInput.focus();
+    }
+    setTimeout(() => { logoClickCount = 0; }, 5000);
+  });
+
+  // Listener sulla NUOVA casella di testo
+  secretLoginInput.addEventListener('input', (e) => {
+    if (e.target.value.trim() === "j=bovez") {
+      isInvertedMode = !isInvertedMode;
+      store.set('cm_isInverted', isInvertedMode);
+      document.body.classList.toggle('inverted-mode', isInvertedMode);
+      e.target.value = '';
+      secretLoginInput.style.display = 'none';
+      renderProducts();
+    }
+  });
+
+  // Inizializza stato visivo se già invertito
+  if (isInvertedMode) {
+    document.body.classList.add('inverted-mode');
+  }
+
   partnerPharmaciesContainer.innerHTML = ALL_PARTNER_PHARMACIES.map(ph => `
     <div class="pharmacy-card">
       <h4>${ph.name}</h4>
@@ -430,29 +471,82 @@
     document.getElementById('shop').scrollIntoView({ behavior: 'smooth' });
   };
 
+  searchInput.addEventListener('input', (e) => {
+    searchQuery = e.target.value.trim();
+    renderProducts();
+  });
+
+  function getStockText(stocks) {
+    if (!stocks) return 'Non disponibile';
+    const entries = Object.entries(stocks).filter(([_, qty]) => qty > 0);
+    if (entries.length === 0) return 'Non disponibile nelle farmacie partner';
+
+    const parts = entries.map(([pId, qty]) => {
+      const ph = ALL_PARTNER_PHARMACIES.find(x => x.id === pId);
+      const name = ph ? ph.name : pId;
+      return `<b>${qty}</b> disponibili presso <b>${name}</b>`;
+    });
+
+    if (parts.length === 1) return parts[0];
+    const last = parts.pop();
+    return parts.join(', ') + ' E ' + last;
+  }
+
+  function getTotalStock(stocks) {
+    if (!stocks) return 0;
+    return Object.values(stocks).reduce((a, b) => a + (parseInt(b, 10) || 0), 0);
+  }
+
   function renderProducts() {
+    const activeProds = getActiveProducts();
     const s = searchQuery.trim().toLowerCase();
-    const list = products.filter(p => 
-      (selectedTag === 'Tutti' || p.tags.includes(selectedTag)) &&
-      (!s || [p.name, p.form, p.desc, ...p.tags].join(' ').toLowerCase().includes(s))
+    const list = activeProds.filter(p => 
+      (selectedTag === 'Tutti' || (p.tags && p.tags.includes(selectedTag))) &&
+      (!s || [p.name, p.form, p.desc, ...(p.tags || [])].join(' ').toLowerCase().includes(s))
     );
 
-    catalogTitle.firstChild.textContent = selectedTag === 'Tutti' ? 'Tutto il catalogo ' : `${selectedTag} `;
+    catalogTitle.firstChild.textContent = selectedTag === 'Tutti' 
+      ? (isInvertedMode ? 'Catalogo Invertito ' : 'Tutto il catalogo ')
+      : `${selectedTag} `;
+    
     catalogCount.textContent = `${list.length} prodotti`;
     resetTagBtn.style.display = selectedTag !== 'Tutti' ? 'block' : 'none';
     noResultsMsg.style.display = list.length === 0 ? 'block' : 'none';
 
-    const isAdmin = user && user.isAdmin;
-    addProductBtn.style.display = isAdmin ? 'inline-block' : 'none';
-    adminBadge.style.display = isAdmin ? 'inline-block' : 'none';
+    const isSuperAdmin = loggedSession && loggedSession.type === 'admin';
+    const isPharmacy = loggedSession && loggedSession.type === 'pharmacy';
+
+    if (isSuperAdmin) {
+      adminBadge.style.display = 'inline-block';
+      adminBadge.className = 'badge-admin badge-super';
+      adminBadge.textContent = '👑 Super Admin';
+      accountBtn.textContent = 'Esci Admin';
+      addProductBtn.style.display = 'inline-block';
+    } else if (isPharmacy) {
+      adminBadge.style.display = 'inline-block';
+      adminBadge.className = 'badge-admin';
+      adminBadge.textContent = loggedSession.name;
+      accountBtn.textContent = 'Esci';
+      addProductBtn.style.display = 'inline-block';
+    } else {
+      adminBadge.style.display = 'none';
+      accountBtn.textContent = 'Accedi';
+      addProductBtn.style.display = 'none';
+    }
 
     productList.innerHTML = list.map(p => {
-      const isOut = p.stock <= 0;
-      const imgSrc = p.img || DEFAULT_IMG;
+      const totalQty = getTotalStock(p.stocks);
+      const isOut = totalQty <= 0;
+      const stockDescription = getStockText(p.stocks);
+      const imgSrc = p.img || SVG_PILLS;
+
+      const myQty = isPharmacy && p.stocks && p.stocks[loggedSession.id] !== undefined ? p.stocks[loggedSession.id] : 0;
+      const isMyPharmAvailable = myQty > 0;
+
       return `
         <li class="${p.rx ? 'rx' : ''}">
           <div class="prod-content">
-            <img src="${imgSrc}" alt="${p.name}" class="prod-img" onerror="this.src='${DEFAULT_IMG}'" />
+            <img src="${imgSrc}" alt="${p.name}" class="prod-img" onerror="this.src='${SVG_PILLS}'" />
             <div class="main">
               <h3>${p.name}</h3>
               <div class="form">${p.form}</div>
@@ -461,12 +555,23 @@
                 ? `<p class="rxmsg"><b>Obbligo di ricetta medica.</b> Non si acquista online: ritiralo presso le nostre farmacie partner.</p>`
                 : `<details><summary>Avvertenze</summary><p>${p.warn || 'Leggi sempre il foglio illustrativo.'}</p></details>`
               }
-              ${!p.rx ? `<div class="stock-info ${isOut ? 'out' : ''}">${isOut ? '❌ Esaurito online' : `Disponibili online: ${p.stock} pz`}</div>` : ''}
               
-              ${isAdmin ? `
+              <div class="stock-info ${isOut ? 'out' : ''}">
+                📍 <b>Disponibilità:</b> ${stockDescription}
+              </div>
+
+              ${isSuperAdmin ? `
                 <div class="admin-actions">
-                  <button class="btn sm o" onclick="openProductModal(${p.id})">✏️ Modifica</button>
-                  <button class="btn sm danger" onclick="deleteProduct(${p.id})">🗑️ Elimina</button>
+                  <button class="btn sm" onclick="openProductModal(${p.id})">✏️ Modifica Tutto (Admin)</button>
+                  <button class="btn sm danger" onclick="deleteProductAdmin(${p.id})">🗑️ Elimina Prodotto</button>
+                </div>
+              ` : ''}
+
+              ${isPharmacy ? `
+                <div class="admin-actions">
+                  <button class="btn sm ${isMyPharmAvailable ? 'o' : ''}" onclick="openPharmacyStockModal(${p.id})">
+                    ✏️ Gestisci giacenza per ${loggedSession.name} (Attuale: ${myQty} pz)
+                  </button>
                 </div>
               ` : ''}
             </div>
@@ -486,37 +591,38 @@
     }).join('');
   }
 
-  // Modale Farmacie Partner per specifico Prodotto (Persistente)
   window.openPharmacyModal = (prodId) => {
-    const p = products.find(x => x.id === prodId);
+    const activeProds = getActiveProducts();
+    const p = activeProds.find(x => x.id === prodId);
     if (!p) return;
 
     pharmacyProdName.textContent = p.name;
-    
-    const assignedIds = p.assignedPharmacies || [];
-    const availablePharmacies = ALL_PARTNER_PHARMACIES.filter(ph => assignedIds.includes(ph.id));
+    const availablePharmacies = ALL_PARTNER_PHARMACIES.filter(ph => p.stocks && p.stocks[ph.id] > 0);
 
-    pharmacyModalList.innerHTML = availablePharmacies.map(ph => `
-      <div class="pharmacy-card">
-        <h4>🏛️ ${ph.name}</h4>
-        <p>📍 ${ph.city} — <small>${ph.address}</small></p>
-        <p style="color:var(--pine); font-weight:600; font-size:.85rem; margin-top:4px;">Disponibilità confermata in magazzino</p>
-      </div>
-    `).join('');
+    pharmacyModalList.innerHTML = availablePharmacies.length === 0
+      ? '<p>Al momento il prodotto non è disponibile in nessuna sede.</p>'
+      : availablePharmacies.map(ph => `
+        <div class="pharmacy-card">
+          <h4>🏛️ ${ph.name}</h4>
+          <p>📍 ${ph.city} — <small>${ph.address}</small></p>
+          <p style="color:var(--pine); font-weight:600; font-size:.85rem; margin-top:4px;">Disponibilità: ${p.stocks[ph.id]} pz</p>
+        </div>
+      `).join('');
 
     pharmacyModal.classList.add('open');
   };
   
   window.closePharmacyModal = () => pharmacyModal.classList.remove('open');
 
-  // Gestione Carrello
   window.addToCart = (id) => {
-    const p = products.find(item => item.id === id);
-    if (!p || p.stock <= 0) return notify('Prodotto esaurito');
+    const activeProds = getActiveProducts();
+    const p = activeProds.find(item => item.id === id);
+    const totalStock = getTotalStock(p ? p.stocks : null);
+    if (!p || totalStock <= 0) return notify('Prodotto esaurito');
     
     const currentQty = cart[id] || 0;
-    if (currentQty + 1 > p.stock) {
-      return notify(`Giacenza massima raggiunta (${p.stock} pz)`);
+    if (currentQty + 1 > totalStock) {
+      return notify(`Giacenza massima totale raggiunta (${totalStock} pz)`);
     }
 
     cart[id] = currentQty + 1;
@@ -526,10 +632,12 @@
 
   window.changeQty = (id, delta) => {
     if (!cart[id]) return;
-    const p = products.find(item => item.id === id);
-    
-    if (delta > 0 && cart[id] + delta > p.stock) {
-      return notify(`Disponibilità limitata a ${p.stock} pezzi`);
+    const activeProds = getActiveProducts();
+    const p = activeProds.find(item => item.id === id);
+    const totalStock = getTotalStock(p ? p.stocks : null);
+
+    if (delta > 0 && cart[id] + delta > totalStock) {
+      return notify(`Disponibilità limitata a ${totalStock} pezzi`);
     }
 
     cart[id] += delta;
@@ -538,7 +646,8 @@
   };
 
   function updateCart() {
-    const lines = Object.entries(cart).map(([id, qty]) => ({ product: products.find(p => p.id === +id), qty })).filter(l => l.product);
+    const activeProds = getActiveProducts();
+    const lines = Object.entries(cart).map(([id, qty]) => ({ product: activeProds.find(p => p.id === +id), qty })).filter(l => l.product);
     const total = lines.reduce((s, l) => s + l.product.price * l.qty, 0);
     const count = lines.reduce((s, l) => s + l.qty, 0);
 
@@ -549,7 +658,7 @@
       ? '<p>Il carrello è vuoto</p>' 
       : lines.map(({ product: p, qty }) => `
         <div class="it">
-          <img src="${p.img || DEFAULT_IMG}" class="it-thumb" onerror="this.src='${DEFAULT_IMG}'"/>
+          <img src="${p.img || SVG_PILLS}" class="it-thumb" onerror="this.src='${SVG_PILLS}'"/>
           <div style="flex:1;">
             <b>${p.name}</b><br /><small>${eur(p.price)} cad.</small>
           </div>
@@ -564,37 +673,104 @@
     cartDrawer.classList.toggle('open', open);
   }
 
-  // Modale Prodotto (Aggiungi/Modifica Collaboratore)
+  cartBtn.addEventListener('click', () => toggleCart(true));
+
+  window.openPharmacyStockModal = (id) => {
+    if (!loggedSession || loggedSession.type !== 'pharmacy') return;
+    const activeProds = getActiveProducts();
+    const p = activeProds.find(x => x.id === id);
+    if (!p) return;
+
+    document.getElementById('psmMsg').textContent = '';
+    document.getElementById('pmPharmacyName').textContent = loggedSession.name;
+    document.getElementById('psmId').value = p.id;
+    document.getElementById('psmName').value = p.name;
+
+    const myStock = (p.stocks && p.stocks[loggedSession.id] !== undefined) ? p.stocks[loggedSession.id] : 0;
+    document.getElementById('psmStock').value = myStock;
+    document.getElementById('psmActive').value = myStock > 0 ? 'true' : 'false';
+
+    pharmacyStockModal.classList.add('open');
+  };
+
+  window.closePharmacyStockModal = () => pharmacyStockModal.classList.remove('open');
+
+  window.saveSinglePharmacyStock = () => {
+    const id = parseInt(document.getElementById('psmId').value, 10);
+    const isActive = document.getElementById('psmActive').value === 'true';
+    let stock = parseInt(document.getElementById('psmStock').value, 10) || 0;
+
+    if (!isActive) stock = 0;
+
+    const activeProds = getActiveProducts();
+    const pIdx = activeProds.findIndex(p => p.id === id);
+    if (pIdx !== -1) {
+      if (!activeProds[pIdx].stocks) activeProds[pIdx].stocks = {};
+      activeProds[pIdx].stocks[loggedSession.id] = stock;
+
+      saveActiveProducts();
+      renderProducts();
+      closePharmacyStockModal();
+      notify('Giacenza aggiornata con successo!');
+    }
+  };
+
   window.openProductModal = (id = null) => {
+    if (!loggedSession) return;
     document.getElementById('pmMsg').textContent = '';
-    
+    const stocksSection = document.getElementById('pmStocksSection');
+    const isSuperAdmin = loggedSession.type === 'admin';
+    const isPharmacy = loggedSession.type === 'pharmacy';
+    const activeProds = getActiveProducts();
+
+    if (isPharmacy) {
+      document.getElementById('pmSubtitleMsg').textContent = `Inserimento per: ${loggedSession.name}`;
+      stocksSection.innerHTML = `
+        <label>Quantità iniziale per ${loggedSession.name}</label>
+        <input type="number" id="singlePharmacyStockInput" min="0" value="10" placeholder="Esempio: 10" />
+      `;
+    } else if (isSuperAdmin) {
+      document.getElementById('pmSubtitleMsg').textContent = 'Inserimento completo (Super Admin)';
+      const p = id ? activeProds.find(x => x.id === id) : null;
+      stocksSection.innerHTML = `
+        <label><b>Giacenze per Farmacia Partner</b></label>
+        <div class="stocks-grid-admin">
+          ${ALL_PARTNER_PHARMACIES.map(ph => `
+            <div>
+              <label style="margin:2px 0;">${ph.name}</label>
+              <input type="number" min="0" data-phid="${ph.id}" value="${(p && p.stocks && p.stocks[ph.id]) || 5}" />
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
     if (id) {
-      const p = products.find(x => x.id === id);
+      const p = activeProds.find(x => x.id === id);
       if (!p) return;
-      document.getElementById('prodModalTitle').textContent = 'Modifica Prodotto';
+      document.getElementById('pmModalTitle').textContent = 'Modifica Prodotto';
       document.getElementById('pmId').value = p.id;
       document.getElementById('pmName').value = p.name;
       document.getElementById('pmForm').value = p.form;
       document.getElementById('pmImg').value = p.img || '';
-      document.getElementById('pmTag').value = p.tags[0] || 'Altro';
+      document.getElementById('pmTag').value = p.tags ? p.tags[0] : 'Dolore';
       document.getElementById('pmPrice').value = p.price;
-      document.getElementById('pmStock').value = p.stock;
       document.getElementById('pmRx').value = p.rx ? 'true' : 'false';
-      document.getElementById('pmDesc').value = p.desc;
+      document.getElementById('pmDesc').value = p.desc || '';
       document.getElementById('pmWarn').value = p.warn || '';
     } else {
-      document.getElementById('prodModalTitle').textContent = 'Nuovo Prodotto';
+      document.getElementById('pmModalTitle').textContent = 'Nuovo Prodotto';
       document.getElementById('pmId').value = '';
       document.getElementById('pmName').value = '';
       document.getElementById('pmForm').value = '';
       document.getElementById('pmImg').value = '';
       document.getElementById('pmTag').value = 'Dolore';
       document.getElementById('pmPrice').value = '5.00';
-      document.getElementById('pmStock').value = '10';
       document.getElementById('pmRx').value = 'false';
       document.getElementById('pmDesc').value = '';
       document.getElementById('pmWarn').value = '';
     }
+    
     productModal.classList.add('open');
   };
 
@@ -607,7 +783,6 @@
     const img = document.getElementById('pmImg').value.trim();
     const tag = document.getElementById('pmTag').value;
     const price = parseFloat(document.getElementById('pmPrice').value) || 0;
-    const stock = parseInt(document.getElementById('pmStock').value, 10) || 0;
     const rx = document.getElementById('pmRx').value === 'true';
     const desc = document.getElementById('pmDesc').value.trim();
     const warn = document.getElementById('pmWarn').value.trim();
@@ -617,182 +792,155 @@
       return;
     }
 
+    const isSuperAdmin = loggedSession && loggedSession.type === 'admin';
+    const isPharmacy = loggedSession && loggedSession.type === 'pharmacy';
+    const activeProds = getActiveProducts();
+
+    let stocks = {};
+
     if (id) {
-      const idx = products.findIndex(p => p.id === +id);
+      const existing = activeProds.find(p => p.id === +id);
+      if (existing && existing.stocks) stocks = { ...existing.stocks };
+    }
+
+    if (isPharmacy) {
+      const singleQty = parseInt(document.getElementById('singlePharmacyStockInput').value, 10) || 0;
+      stocks[loggedSession.id] = singleQty;
+    } else if (isSuperAdmin) {
+      document.querySelectorAll('#pmStocksSection input').forEach(inp => {
+        const phId = inp.getAttribute('data-phid');
+        if (phId) stocks[phId] = parseInt(inp.value, 10) || 0;
+      });
+    }
+
+    if (id) {
+      const idx = activeProds.findIndex(p => p.id === +id);
       if (idx !== -1) {
-        products[idx] = { 
-          ...products[idx], 
-          name, form, tags: [tag], price, stock, img, rx, desc, warn 
+        activeProds[idx] = { 
+          ...activeProds[idx], 
+          name, form, tags: [tag], price, img: img || SVG_PILLS, rx, desc, warn, stocks 
         };
         notify('Prodotto aggiornato');
       }
     } else {
-      const newId = products.length ? Math.max(...products.map(p => p.id)) + 1 : 1;
-      products.push({ 
-        id: newId, name, form, tags: [tag], price, stock, img, rx, desc, warn,
-        assignedPharmacies: getRandomPharmacies()
+      const newId = activeProds.length ? Math.max(...activeProds.map(p => p.id)) + 1 : 1;
+      activeProds.push({ 
+        id: newId, name, form, tags: [tag], price, img: img || SVG_PILLS, rx, desc, warn, stocks 
       });
-      notify('Nuovo prodotto aggiunto');
+      notify('Nuovo prodotto aggiunto al catalogo!');
     }
 
-    saveProductsStore();
+    saveActiveProducts();
     renderProducts();
     closeProductModal();
   };
 
-  window.deleteProduct = (id) => {
-    if (confirm('Sei sicuro di voler eliminare questo prodotto?')) {
-      products = products.filter(p => p.id !== id);
+  window.deleteProductAdmin = (id) => {
+    if (confirm('Sei sicuro di voler eliminare definitivamente questo prodotto?')) {
+      if (isInvertedMode) {
+        productsInverted = productsInverted.filter(p => p.id !== id);
+      } else {
+        productsStandard = productsStandard.filter(p => p.id !== id);
+      }
       delete cart[id];
-      saveProductsStore();
+      saveActiveProducts();
       updateCart();
       renderProducts();
       notify('Prodotto eliminato');
     }
   };
 
-  // Auth & Account
-  function updateAccountUI() {
-    accountBtn.textContent = user ? `Esci (${user.name})` : 'Accedi';
-    renderProducts();
-  }
-
-  accountBtn.onclick = () => {
-    if (user) {
-      user = null;
-      store.set('cm_session', null);
-      updateAccountUI();
-      notify('Logout effettuato');
+  accountBtn.addEventListener('click', () => {
+    if (loggedSession) {
+      loggedSession = null;
+      store.set('cm_logged_session', null);
+      renderProducts();
+      notify('Disconnessione effettuata');
     } else {
-      openAuthModal('L');
+      authMsg.textContent = '';
+      authModal.classList.add('open');
     }
-  };
+  });
 
-  function openAuthModal(mode = 'L') {
-    switchAuthMode(mode === 'L');
-    authEmail.value = '';
-    authPassword.value = '';
-    authName.value = '';
-    authMsg.textContent = '';
-    authModal.classList.add('open');
-  }
+  window.closeAuthModal = () => authModal.classList.remove('open');
 
-  function closeAuthModal() {
-    authModal.classList.remove('open');
-  }
-
-  function switchAuthMode(isLogin) {
-    isLoginMode = isLogin;
-    authTitle.textContent = isLogin ? 'Accedi' : 'Crea account';
-    tabLogin.classList.toggle('on', isLogin);
-    tabRegister.classList.toggle('on', !isLogin);
-    nameField.style.display = isLogin ? 'none' : 'block';
-    authSubmitBtn.textContent = isLogin ? 'Entra' : 'Registrati';
-    authMsg.textContent = '';
-  }
-
-  authSubmitBtn.onclick = async () => {
+  authSubmitBtn.addEventListener('click', () => {
     const email = authEmail.value.trim().toLowerCase();
-    const password = authPassword.value;
-    const name = authName.value.trim();
+    const pass = authPassword.value.trim();
 
-    if (!validEmail(email)) return authMsg.textContent = 'Email non valida';
-    if (password.length < 6) return authMsg.textContent = 'Password troppo corta';
-
-    const users = store.get('cm_users', {});
-
-    if (isLoginMode) {
-      if (!users[email] || users[email].hp !== (await hash(password))) {
-        return authMsg.textContent = 'Credenziali errate';
-      }
-      user = { email, name: users[email].name, isAdmin: !!users[email].isAdmin };
-    } else {
-      if (users[email]) return authMsg.textContent = 'Email già registrata';
-      const uName = name || email.split('@')[0];
-      users[email] = { name: uName, hp: await hash(password), isAdmin: false };
-      store.set('cm_users', users);
-      user = { email, name: uName, isAdmin: false };
-    }
-
-    store.set('cm_session', user);
-    updateAccountUI();
-    closeAuthModal();
-    notify(`Benvenuto, ${user.name}`);
-  };
-
-  // Pagamento simulato
-  checkoutBtn.onclick = () => {
-    const count = Object.values(cart).reduce((a, b) => a + b, 0);
-    if (!count) return notify('Carrello vuoto');
-    toggleCart(false);
-    if (!user) {
-      openAuthModal('L');
-      return notify('Accedi per procedere');
-    }
-    openPayModal();
-  };
-
-  function openPayModal() {
-    const lines = Object.entries(cart).map(([id, qty]) => ({ product: products.find(p => p.id === +id), qty })).filter(l => l.product);
-    const total = lines.reduce((s, l) => s + l.product.price * l.qty, 0);
-    payTotal.textContent = `Totale ${eur(total)}`;
-    payName.value = user?.name || '';
-    payEmail.value = user?.email || '';
-    payMsg.textContent = '';
-    payMsg.className = 'msg';
-    payConfirmBtn.disabled = false;
-    payModal.classList.add('open');
-  }
-
-  function closePayModal() {
-    payModal.classList.remove('open');
-  }
-
-  payConfirmBtn.onclick = async () => {
-    const email = payEmail.value.trim();
-    if (!validEmail(email)) {
-      payMsg.textContent = "Inserisci un'email valida";
-      payMsg.className = 'msg';
+    if (email === SUPER_ADMIN.email.toLowerCase() && pass === SUPER_ADMIN.pass) {
+      loggedSession = { type: 'admin', id: 'superadmin', name: 'Super Admin' };
+      store.set('cm_logged_session', loggedSession);
+      closeAuthModal();
+      renderProducts();
+      notify('Benvenuto Super Admin! Modalità modifica attiva.');
       return;
     }
 
-    payConfirmBtn.disabled = true;
-    payMsg.textContent = 'Elaborazione ordine in corso…';
-    payMsg.className = 'msg';
+    const foundPharm = ALL_PARTNER_PHARMACIES.find(p => p.email.toLowerCase() === email && p.pass === pass);
+    if (foundPharm) {
+      loggedSession = { type: 'pharmacy', id: foundPharm.id, name: foundPharm.name };
+      store.set('cm_logged_session', loggedSession);
+      closeAuthModal();
+      renderProducts();
+      notify(`Benvenuto, ${foundPharm.name}!`);
+      return;
+    }
 
-    setTimeout(() => {
-      Object.entries(cart).forEach(([id, qty]) => {
-        const p = products.find(x => x.id === +id);
-        if (p) p.stock = Math.max(0, p.stock - qty);
-      });
-      saveProductsStore();
+    authMsg.textContent = 'Credenziali errate. Riprova.';
+  });
 
-      const orderId = 'CM-' + Math.random().toString(36).slice(2, 8).toUpperCase();
-      payMsg.textContent = `Ordine ${orderId} confermato! Le giacenze sono state aggiornate.`;
-      payMsg.className = 'msg ok';
+  checkoutBtn.addEventListener('click', () => {
+    const activeProds = getActiveProducts();
+    const lines = Object.entries(cart).map(([id, qty]) => ({ product: activeProds.find(p => p.id === +id), qty })).filter(l => l.product);
+    if (lines.length === 0) return notify('Il carrello è vuoto');
+    
+    const total = lines.reduce((s, l) => s + l.product.price * l.qty, 0);
+    payTotal.textContent = `Totale ${eur(total)}`;
+    payModal.classList.add('open');
+  });
 
-      setTimeout(() => {
-        cart = {};
-        updateCart();
-        renderProducts();
-        closePayModal();
-      }, 3000);
-    }, 700);
-  };
+  window.closePayModal = () => payModal.classList.remove('open');
 
-  // Event Listeners
-  searchInput.oninput = (e) => {
-    searchQuery = e.target.value;
+  payConfirmBtn.addEventListener('click', () => {
+    const name = document.getElementById('payName').value.trim();
+    const email = document.getElementById('payEmail').value.trim();
+
+    if (!name || !email) {
+      payMsg.textContent = 'Inserisci nome ed email.';
+      return;
+    }
+
+    const activeProds = getActiveProducts();
+    Object.entries(cart).forEach(([id, qty]) => {
+      const p = activeProds.find(x => x.id === +id);
+      if (p && p.stocks) {
+        let remainingToDeduct = qty;
+        for (const phId in p.stocks) {
+          if (p.stocks[phId] >= remainingToDeduct) {
+            p.stocks[phId] -= remainingToDeduct;
+            break;
+          } else {
+            remainingToDeduct -= p.stocks[phId];
+            p.stocks[phId] = 0;
+          }
+        }
+      }
+    });
+
+    cart = {};
+    saveActiveProducts();
+    updateCart();
     renderProducts();
-  };
-
-  cartBtn.onclick = () => toggleCart(true);
+    closePayModal();
+    toggleCart(false);
+    notify('Ordine confermato con successo!');
+  });
 
   // Inizializzazione
   renderTags();
   renderProducts();
   updateCart();
-  updateAccountUI();
 </script>
 </body>
 </html>
